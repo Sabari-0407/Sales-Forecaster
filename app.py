@@ -17,37 +17,36 @@ st.markdown("Database Management System Project utilizing SQL, CART algorithm, a
 tab1, tab2, tab3, tab4 = st.tabs(["Input Daily Data", "Forecast Engine", "Error Logs", "Database View"])
 
 # --- TAB 1: INPUT DATA ---
+# --- TAB 1: INPUT DATA ---
 with tab1:
-    st.subheader("Update Database")
-    st.write("Enter your daily sales. Negative values will be recorded as a loss.")
+    st.subheader("1. Bulk Data Upload")
+    uploaded_file = st.file_uploader("Upload your historical dataset (.csv or .txt)", type=['csv', 'txt'])
     
+    if uploaded_file is not None:
+        try:
+            # Assuming CSV format with 'date' and 'amount' columns
+            bulk_df = pd.read_csv(uploaded_file)
+            if 'date' in bulk_df.columns and 'amount' in bulk_df.columns:
+                db.insert_bulk_data(bulk_df)
+                st.success(f"Successfully imported {len(bulk_df)} records!")
+            else:
+                st.error("Invalid File Format: Ensure columns are named 'date' and 'amount'.")
+        except Exception as e:
+            st.error(f"Error processing file: {e}")
+
+    st.markdown("---")
+    st.subheader("2. Daily Update")
+    st.write("Enter individual daily data entries below.")
+    # (Keep your existing daily input logic here...)
     col1, col2 = st.columns(2)
+
     with col1:
-        date_input = st.date_input("Select Date")
+        date_input = st.date_input("Date")
     with col2:
-        amount_input = st.text_input("Enter Sales/Loss Amount ($)")
-        
-    if st.button("Submit to Database"):
-        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        
-        # Error Handling & Missing Values
-        if not amount_input.strip():
-            db.log_error(current_time, str(date_input), "EMPTY", "Missing Value Error")
-            st.error("Error: Value cannot be empty. Logged to Database.")
-        else:
-            try:
-                # Attempt to convert to float
-                clean_amount = float(amount_input)
-                db.insert_sales_data(str(date_input), clean_amount)
-                
-                if clean_amount < 0:
-                    st.warning(f"Loss of ${abs(clean_amount):.2f} successfully recorded for {date_input}.")
-                else:
-                    st.success(f"Profit of ${clean_amount:.2f} successfully recorded for {date_input}.")
-                    
-            except ValueError:
-                db.log_error(current_time, str(date_input), amount_input, "Data Type Error - Not a Number")
-                st.error("Error: Invalid data format. Must be a number. Logged to Database.")
+        amount_input = st.text_input("Amount")
+    if st.button("Submit Daily Entry"):
+        # (Keep your existing insert_sales_data logic here...)
+
 
 # --- TAB 2: FORECAST ENGINE (CART Algorithm) ---
 with tab2:
